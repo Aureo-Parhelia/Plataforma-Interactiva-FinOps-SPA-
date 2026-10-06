@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudEconomics Studio | FinOps ONU</title>
+    
+    <!-- Fuentes Tipográficas -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Íconos (FontAwesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Motor de Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* ==========================================================================
+           1. SISTEMA DE DISEÑO (DESIGN SYSTEM) & VARIABLES GLOBALES
+           ========================================================================== */
+        :root {
+            /* Light Theme Variables */
+            --bg-base-light: #F8FAFC;
+            --bg-surface-light: #FFFFFF;
+            --bg-sidebar-light: #0F172A;
+            --text-primary-light: #0F172A;
+            --text-secondary-light: #64748B;
+            --border-color-light: #E2E8F0;
+            --chart-grid-light: #F1F5F9;
+            
+            /* Dark Theme Variables (Default) */
+            --bg-base-dark: #0B0F19;
+            --bg-surface-dark: #111827;
+            --bg-sidebar-dark: #070B14;
+            --text-primary-dark: #F8FAFC;
+            --text-secondary-dark: #94A3B8;
+            --border-color-dark: #1E293B;
+            --chart-grid-dark: #1E293B;
+
+            /* Brand Colors (Startup/Fintech Palette) */
+            --brand-primary: #3B82F6;     /* Blue */
+            --brand-primary-hover: #2563EB;
+            --brand-accent: #10B981;      /* Emerald */
+            --brand-aws: #F59E0B;         /* Amber */
+            --brand-azure: #0EA5E9;       /* Sky Blue */
+            --brand-gcp: #EF4444;         /* Red */
+            --semantic-success: #10B981;
+            --semantic-warning: #F59E0B;
+            --semantic-danger: #EF4444;
+
+            /* UI Metrics */
+            --sidebar-width: 280px;
+            --topbar-height: 70px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Aplicación del Tema Dinámico */
+        [data-theme="light"] {
+            --bg-base: var(--bg-base-light);
+            --bg-surface: var(--bg-surface-light);
+            --bg-sidebar: var(--bg-sidebar-light);
+            --text-primary: var(--text-primary-light);
+            --text-secondary: var(--text-secondary-light);
+            --border-color: var(--border-color-light);
+            --chart-grid: var(--chart-grid-light);
+        }
+        [data-theme="dark"] {
+            --bg-base: var(--bg-base-dark);
+            --bg-surface: var(--bg-surface-dark);
+            --bg-sidebar: var(--bg-sidebar-dark);
+            --text-primary: var(--text-primary-dark);
+            --text-secondary: var(--text-secondary-dark);
+            --border-color: var(--border-color-dark);
+            --chart-grid: var(--chart-grid-dark);
+        }
+
+        /* ==========================================================================
+           2. RESET & TIPOGRAFÍA
+           ========================================================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+        h1, h2, h3, h4 { color: var(--text-primary); font-weight: 600; letter-spacing: -0.025em; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Custom Scrollbar (Mac OS Style) */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+        /* ==========================================================================
+           3. LAYOUT PRINCIPAL
+           ========================================================================== */
+        #app-container { display: flex; width: 100%; height: 100%; }
+
+        /* SIDEBAR (Panel Lateral Estilo IDE) */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+        .sidebar-brand {
+            height: var(--topbar-height);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .sidebar-brand i { color: var(--brand-primary); margin-right: 12px; }
+        .sidebar-nav { flex: 1; padding: 24px 16px; overflow-y: auto; }
+        .nav-section-title {
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;
+            color: #64748B; margin: 16px 0 8px 12px; font-weight: 600;
+        }
+        .nav-item {
+            display: flex; align-items: center; padding: 12px; margin-bottom: 4px;
+            border-radius: 8px; color: #94A3B8; text-decoration: none;
+            transition: var(--transition-smooth); cursor: pointer;
+        }
+        .nav-item i { width: 24px; font-size: 1.1rem; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.05); color: #FFFFFF; }
+        .nav-item.active { background-color: var(--brand-primary); color: #FFFFFF; box-shadow: var(--shadow-glow); }
+        .sidebar-footer { padding: 24px; border-top: 1px solid rgba(255,255,255,0.05); }
+
+        /* MAIN CONTENT & TOPBAR */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; position: relative; }
+        
+        .topbar {
+            height: var(--topbar-height);
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            z-index: 90;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .project-badge {
+            background-color: rgba(16, 185, 129, 0.1); color: var(--semantic-success);
+            padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .topbar-right { display: flex; align-items: center; gap: 20px; }
+        
+        /* Theme Toggle Switch */
+        .theme-switch {
+            position: relative; width: 50px; height: 26px; background-color: var(--border-color);
+            border-radius: 26px; cursor: pointer; display: flex; align-items: center; padding: 3px;
+        }
+        .theme-switch-thumb {
+            width: 20px; height: 20px; background-color: #FFF; border-radius: 50%;
+            transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center;
+        }
+        [data-theme="dark"] .theme-switch-thumb { transform: translateX(24px); background-color: var(--text-primary); }
+        [data-theme="dark"] .theme-switch i.fa-moon { display: block; color: var(--bg-surface); font-size: 12px; }
+        [data-theme="dark"] .theme-switch i.fa-sun { display: none; }
+        [data-theme="light"] .theme-switch i.fa-moon { display: none; }
+        [data-theme="light"] .theme-switch i.fa-sun { display: block; color: var(--brand-aws); font-size: 12px; }
+
+        .content-area { flex: 1; padding: 32px; overflow-y: auto; scroll-behavior: smooth; }
+
+        /* ==========================================================================
+           4. COMPONENTES UI (Cards, Grids, Forms, Badges)
+           ========================================================================== */
+        .view-pane { display: none; animation: fadeUp 0.4s ease-out forwards; }
+        .view-pane.active { display: block; }
+        
+        .header-group { margin-bottom: 32px; }
+        .header-title { font-size: 1.8rem; margin-bottom: 8px; }
+        .header-subtitle { color: var(--text-secondary); font-size: 0.95rem; }
+
+        .grid-1 { display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-bottom: 24px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+
+        .card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover { border-color: rgba(59, 130, 246, 0.3); box-shadow: var(--shadow-glow); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .card-title i { color: var(--brand-primary); }
+
+        /* Glassmorphism Effect for Highlights */
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Formularios Estilo Fintech */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;}
+        .form-control {
+            width: 100%; padding: 12px 16px; background-color: var(--bg-base);
+            border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary);
+            font-size: 1rem; transition: var(--transition-smooth);
+        }
+        .form-control:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        
+        /* Select personalizado */
+        select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
+
+        /* Botones Profesionales */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 24px; border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+            cursor: pointer; transition: var(--transition-smooth); border: none;
+        }
+        .btn-primary { background-color: var(--brand-primary); color: #FFF; box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39); }
+        .btn-primary:hover { background-color: var(--brand-primary-hover); transform: translateY(-2px); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-primary); }
+        .btn-outline:hover { background-color: var(--border-color); }
+        .btn-full { width: 100%; }
+
+        /* KPIs Numerics */
+        .kpi-value { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.05em; margin: 10px 0; font-family: 'JetBrains Mono', monospace; }
+        .kpi-trend { font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+        .trend-up { color: var(--semantic-danger); }
+        .trend-down { color: var(--semantic-success); }
+        .trend-neutral { color: var(--text-secondary); }
+
+        /* Tablas DataGrid */
+        .datagrid { width: 100%; border-collapse: collapse; }
+        .datagrid th { text-align: left; padding: 16px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
+        .datagrid td { padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+        .datagrid tr:last-child td { border-bottom: none; }
+        .datagrid tbody tr:hover { background-color: rgba(148, 163, 184, 0.05); }
+
+        /* Consola Terminal (Para Auditoría) */
+        .terminal {
+            background-color: #0F172A; border-radius: 8px; padding: 16px;
+            height: 300px; overflow-y: auto; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem; color: #38BDF8; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            border: 1px solid #1E293B;
+        }
+        .term-line { margin-bottom: 4px; }
+        .term-time { color: #64748B; margin-right: 12px; }
+        .term-cmd { color: #10B981; }
+        .term-warn { color: #F59E0B; }
+        .term-err { color: #EF4444; }
+
+        /* Contenedores de Gráficos Chart.js */
+        .chart-wrapper { width: 100%; height: 320px; position: relative; }
+        .chart-wrapper-sm { width: 100%; height: 240px; position: relative; }
+
+        /* Badges & Chips */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .bg-aws { background-color: rgba(245, 158, 11, 0.1); color: var(--brand-aws); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .bg-azure { background-color: rgba(14, 165, 233, 0.1); color: var(--brand-azure); border: 1px solid rgba(14, 165, 233, 0.2); }
+        .bg-gcp { background-color: rgba(239, 68, 68, 0.1); color: var(--brand-gcp); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse { animation: pulsing 2s infinite; }
+        @keyframes pulsing {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        
+        <!-- ==========================================
+             SIDEBAR DE NAVEGACIÓN
+             ========================================== -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-infinity"></i> CloudEco
+            </div>
+            <div class="sidebar-nav">
+                <div class="nav-section-title">Modelado FinOps</div>
+                <a class="nav-item active" onclick="app.router('simulador')"><i class="fa-solid fa-calculator"></i> Motor de Precios</a>
+                <a class="nav-item" onclick="app.router('dashboard')"><i class="fa-solid fa-chart-line"></i> TCO Dashboard</a>
+                
+                <div class="nav-section-title">Inteligencia Arquitectural</div>
+                <a class="nav-item" onclick="app.router('arquitectura')"><i class="fa-solid fa-server"></i> Análisis de Desperdicio</a>
+                <a class="nav-item" onclick="app.router('sostenibilidad')"><i class="fa-solid fa-leaf"></i> Carbon Footprint ESG</a>
+                
+                <div class="nav-section-title">Gobernanza y Cumplimiento</div>
+                <a class="nav-item" onclick="app.router('auditoria')"><i class="fa-solid fa-terminal"></i> Terminal de Auditoría</a>
+            </div>
+            <div class="sidebar-footer">
+                <div style="font-size: 0.8rem; color: #64748B; line-height: 1.5;">
+                    ONU Census Project 2026<br>
+                    <span style="color: #10B981;">● Sistema Operativo</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==========================================
+             ÁREA PRINCIPAL
+             ========================================== -->
+        <div class="main-wrapper">
+            
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <h2 style="font-size: 1.1rem; font-weight: 500;">Arquitectura de Computadoras UPC</h2>
+                    <span class="project-badge">Presupuesto ONU: <span id="hdr-budget">$0.00</span></span>
+                </div>
+                <div class="topbar-right">
+                    <!-- Theme Toggle -->
+                    <div class="theme-switch" onclick="app.toggleTheme()">
+                        <div class="theme-switch-thumb">
+                            <i class="fa-solid fa-sun"></i>
+                            <i class="fa-solid fa-moon"></i>
+                        </div>
+                    </div>
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--brand-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                        LT
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENEDOR DE VISTAS (SPA) -->
+            <main class="content-area" id="router-view">
+                
+                <!-- VISTA 1: MOTOR DE PRECIOS (FORMULARIO AVANZADO) -->
+                <section id="view-simulador" class="view-pane active">
+                    <div class="header-group">
+                        <h1 class="header-title">Motor de Tarificación Global</h1>
+                        <p class="header-subtitle">Parámetros operativos para el despliegue censal en regiones autorizadas (GDPR Compliant).</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <!-- Panel Global -->
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title"><i class="fa-solid fa-globe"></i> Variables Macros</h3></div>
+                            <div class="grid-2" style="margin-bottom:0;">
+                                <div class="form-group">
+                                    <label class="form-label">Región Geográfica</label>
+                                    <select class="form-control" id="in_region">
+                                        <option value="eu_west">Europa Occidental (Irlanda/Bélgica)</option>
+                                        <option value="eu_central">Europa Central (Frankfurt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Modelo de Contratación</label>
+                                    <select class="form-control" id="in_discount">
+                                        <option value="ondemand">On-Demand (Pago por uso)</option>
+                                        <option value="1yr">Reservado 1 Año (-20%)</option>
+                                        <option value="3yr">Reservado 3 Años (-40%)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Días de Operación Continua</label>
+                                    <input type="number" class="form-control" id="in_dias" value="90">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Data Out Mensual (GB)</label>
+                                    <input type="number" class="form-control" id="in_dataout" value="1000">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel Presupuesto -->
+                        <div class="card glass-panel">
+                            <div class="card-header"><h3 class="card-title"><i class="fa-solid fa-vault"></i> Gobernanza Financiera (Budget)</h3></div>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">Defina el presupuesto máximo asignado por la ONU. El sistema calculará el <em>Burn Rate</em> y alertará si la arquitectura propuesta excede los fondos.</p>
+                            <div class="form-group">
+                                <label class="form-label">Fondo Aprobado CapEx/OpEx (USD)</label>
+                                <input type="number" class="form-control" id="in_budget" value="150000" style="font-family: 'JetBrains Mono'; font-size: 1.2rem; font-weight: bold; color: var(--brand-primary);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel Clústeres -->
+                    <h3 style="margin: 32px 0 16px 0; font-size: 1.2rem;">Dimensionamiento IaaS (Linux)</h3>
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title"><i class="fa-solid fa-microchip"></i> Nodos de Cómputo (App Tier)</h3></div>
+                            <div class="form-group">
+                                <label class="form-label">Cantidad de Instancias (Min: 4 vCPU)</label>
+                                <input type="number" class="form-control" id="in_vmp_qty" value="300">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Disco SSD EBS/Managed (GB por Nodo)</label>
+                                <input type="number" class="form-control" id="in_vmp_st" value="100">
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title"><i class="fa-solid fa-database"></i> Nodos Base de Datos (DB Tier)</h3></div>
+                            <div class="form-group">
+                                <label class="form-label">Cantidad de Instancias (Min: 8 vCPU)</label>
+                                <input type="number" class="form-control" id="in_vmdb_qty" value="100">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Disco SSD Persistente (GB por Nodo)</label>
+                                <input type="number" class="form-control" id="in_vmdb_st" value="3000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-full pulse" style="font-size: 1.1rem; padding: 16px;" onclick="app.executeSimulation()">
+                        <i class="fa-solid fa-bolt"></i> Procesar Simulación de Costos TCO
+                    </button>
+                </section>
+
+                <!-- VISTA 2: DASHBOARD TCO -->
+                <section id="view-dashboard" class="view-pane">
+                    <div class="header-group">
+                        <h1 class="header-title">Dashboard Financiero (OpEx)</h1>
+                        <p class="header-subtitle">Comparativa competitiva de los hiperescaladores bajo los parámetros simulados.</p>
+                    </div>
+
+                    <!-- Top Metrics: Presupuesto y Ganador -->
+                    <div class="grid-2">
+                        <div class="card" id="alert-budget-card">
+                            <h4 class="form-label">Estado del Presupuesto</h4>
+                            <div class="kpi-value" id="out_burnrate">0% Consumido</div>
+                            <div class="kpi-trend" id="out_budget_txt">Evaluando viabilidad financiera...</div>
+                        </div>
+                        <div class="card glass-panel" style="border-color: var(--semantic-success);">
+                            <h4 class="form-label">Proveedor Óptimo Sugerido</h4>
+                            <div class="kpi-value" style="color: var(--semantic-success);" id="out_winner_name">Pendiente</div>
+                            <div class="kpi-trend trend-down"><i class="fa-solid fa-arrow-trend-down"></i> Menor TCO Garantizado</div>
+                        </div>
+                    </div>
+
+                    <!-- KPIs Proveedores -->
+                    <div class="grid-3">
+                        <div class="card" id="card_kpi_aws">
+                            <div class="badge bg-aws" style="display:inline-block; margin-bottom:10px;">AWS</div>
+                            <h4 class="form-label">Costo Total Propiedad</h4>
+                            <div class="kpi-value" id="out_tco_aws">$0.00</div>
+                        </div>
+                        <div class="card" id="card_kpi_az">
+                            <div class="badge bg-azure" style="display:inline-block; margin-bottom:10px;">Azure</div>
+                            <h4 class="form-label">Costo Total Propiedad</h4>
+                            <div class="kpi-value" id="out_tco_az">$0.00</div>
+                        </div>
+                        <div class="card" id="card_kpi_gcp">
+                            <div class="badge bg-gcp" style="display:inline-block; margin-bottom:10px;">GCP</div>
+                            <h4 class="form-label">Costo Total Propiedad</h4>
+                            <div class="kpi-value" id="out_tco_gcp">$0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos Principales -->
+                    <div class="grid-2">
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title">Desglose de Costos (Compute vs Storage)</h3></div>
+                            <div class="chart-wrapper"><canvas id="chartTCOBar"></canvas></div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title">Proyección Multi-Anual (Tendencia)</h3></div>
+                            <div class="chart-wrapper"><canvas id="chartTrendLine"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VISTA 3: INTELIGENCIA ARQUITECTURAL (AZURE WASTE) -->
+                <section id="view-arquitectura" class="view-pane">
+                    <div class="header-group">
+                        <h1 class="header-title">Análisis Forense de Arquitectura</h1>
+                        <p class="header-subtitle">Identificación de ineficiencias y matrices de competencia técnica.</p>
+                    </div>
+
+                    <div class="grid-2">
+                        <!-- Penalización Geométrica Azure -->
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color: var(--semantic-warning);"></i> Ineficiencia de Storage (Azure Tiers)</h3></div>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;">Azure Managed Disks opera con bloques fijos. Visualización del espacio pagado vs utilizado en la capa de Base de Datos.</p>
+                            
+                            <div class="chart-wrapper-sm" style="margin-bottom: 20px;"><canvas id="chartWasteDonut"></canvas></div>
+                            
+                            <div style="background-color: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--semantic-danger); padding: 16px; border-radius: 4px;">
+                                <h4 style="color: var(--semantic-danger); margin-bottom: 8px;">Diagnóstico FinOps</h4>
+                                <p style="font-size: 0.85rem; line-height: 1.5;" id="out_waste_txt">Ejecute la simulación para detectar penalizaciones.</p>
+                            </div>
+                        </div>
+
+                        <!-- Matriz Cualitativa Radar -->
+                        <div class="card">
+                            <div class="card-header"><h3 class="card-title"><i class="fa-solid fa-shield-halved"></i> Matriz de Evaluación IaaS</h3></div>
+                            <div class="chart-wrapper"><canvas id="chartRadar"></canvas></div>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 10px;">Evaluación cualitativa (Escala 1-10) basada en documentación de arquitecturas de referencia.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VISTA 4: SOSTENIBILIDAD ESG -->
+                <section id="view-sostenibilidad" class="view-pane">
+                    <div class="header-group">
+                        <h1 class="header-title">Módulo de Sostenibilidad (ESG)</h1>
+                        <p class="header-subtitle">Proyección algorítmica de la Huella de Carbono del proyecto censal.</p>
+                    </div>
+
+                    <div class="grid-3">
+                        <div class="card">
+                            <h4 class="form-label">Total Nodos Aprovisionados</h4>
+                            <div class="kpi-value" id="eco_nodes">0</div>
+                            <div class="kpi-trend trend-neutral">Instancias Linux activas</div>
+                        </div>
+                        <div class="card">
+                            <h4 class="form-label">Horas de Cómputo Brutas</h4>
+                            <div class="kpi-value" id="eco_hours">0h</div>
+                            <div class="kpi-trend trend-neutral">Consumo del hipervisor</div>
+                        </div>
+                        <div class="card glass-panel" style="border-color: var(--brand-accent);">
+                            <h4 class="form-label">Emisiones Scope 2 (Proyectadas)</h4>
+                            <div class="kpi-value" style="color: var(--brand-accent);" id="eco_co2">0 kg</div>
+                            <div class="kpi-trend trend-down"><i class="fa-solid fa-leaf"></i> Estimación optimizada</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title" style="margin-bottom: 16px;">Directiva Medioambiental ONU</h3>
+                        <p style="line-height: 1.6; color: var(--text-secondary);">
+                            El cálculo del PUE (Power Usage Effectiveness) asume centros de datos ubicados en Europa con compromisos de energía 100% renovable (AWS y Google Cloud en Irlanda/Bélgica). La virtualización masiva implementada en este proyecto previene la compra de <strong id="eco_hardware">0</strong> servidores físicos, evitando la extracción de metales raros y eliminando los desechos electrónicos (E-waste) post-censo.
+                        </p>
+                    </div>
+                </section>
+
+                <!-- VISTA 5: AUDITORÍA Y EXPORTACIÓN -->
+                <section id="view-auditoria" class="view-pane">
+                    <div class="header-group" style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h1 class="header-title">Auditoría y Transparencia</h1>
+                            <p class="header-subtitle">Registros de cálculo del motor y exportación de datos contables.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.exportCSV()"><i class="fa-solid fa-file-csv"></i> Exportar Data TCO (.csv)</button>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <table class="datagrid">
+                                <thead style="background-color: var(--chart-grid);">
+                                    <tr>
+                                        <th>Provider</th>
+                                        <th>Compute</th>
+                                        <th>Storage</th>
+                                        <th>Total TCO</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <tr><td colspan="4" style="text-align:center;">Sin datos simulados</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="card" style="background-color: #000; border: none;">
+                            <h3 class="card-title" style="color: #FFF; margin-bottom: 12px;"><i class="fa-solid fa-terminal"></i> Core Math Trace Logs</h3>
+                            <div class="terminal" id="term_logs">
+                                <div class="term-line"><span class="term-time">[Sys]</span> Sistema Inicializado. Motor FinOps inactivo.</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         LÓGICA DE APLICACIÓN FRONT-END (VANILLA JS)
+         ========================================================================== -->
+    <script>
+        /**
+         * CLOUDECONOMICS STUDIO - FINOPS ENGINE
+         * Arquitectura de Objeto Único (App Module)
+         */
+        const app = {
+            // 1. Base de Datos de Precios (Simulada para 2 regiones x 3 proveedores)
+            // Precios referenciales On-Demand hora/mes.
+            pricingDB: {
+                eu_west: {
+                    aws: { compApp: 0.2135, compDb: 0.5922, store: 0.088, net: 0.09 },
+                    az:  { compApp: 0.1790, compDb: 0.5640, net: 0.087 }, // Storage is Tier based
+                    gcp: { compApp: 0.1474, compDb: 0.5765, store: 0.170, net: 0.12 }
+                },
+                eu_central: {
+                    aws: { compApp: 0.2300, compDb: 0.6100, store: 0.090, net: 0.09 },
+                    az:  { compApp: 0.1900, compDb: 0.5800, net: 0.087 },
+                    gcp: { compApp: 0.1600, compDb: 0.5900, store: 0.180, net: 0.12 }
+                }
+            },
+            
+            // 2. Estado Global (State)
+            state: {
+                isCalculated: false,
+                currentTheme: 'dark',
+                results: null,
+                charts: {} // Referencias a Chart.js para destruirlas/actualizarlas
+            },
+
+            // 3. Inicialización
+            init() {
+                this.logTerm("INFO", "Cargando dependencias de interfaz y Chart.js...");
+                // Configuración Global Chart.js
+                Chart.defaults.color = '#94A3B8';
+                Chart.defaults.font.family = "'Inter', sans-serif";
+                
+                // Formato Inicial Presupuesto Topbar
+                document.getElementById('in_budget').addEventListener('input', (e) => {
+                    document.getElementById('hdr-budget').innerText = this.formatMoney(e.target.value);
+                });
+                document.getElementById('hdr-budget').innerText = this.formatMoney(document.getElementById('in_budget').value);
+                
+                this.logTerm("SUCCESS", "Plataforma lista para evaluación. Esperando inputs del usuario.");
+            },
+
+            // 4. Utilidades
+            formatMoney(amount) {
+                return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+            },
+            formatNum(amount) {
+                return new Intl.NumberFormat('en-US').format(amount);
+            },
+            logTerm(type, message) {
+                const term = document.getElementById('term_logs');
+                const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                let colorClass = 'term-cmd';
+                if(type === 'WARN') colorClass = 'term-warn';
+                if(type === 'ERR') colorClass = 'term-err';
+                
+                const line = document.createElement('div');
+                line.className = 'term-line';
+                line.innerHTML = `<span class="term-time">[${time}]</span> <span class="${colorClass}">${message}</span>`;
+                term.appendChild(line);
+                term.scrollTop = term.scrollHeight; // Auto-scroll
+            },
+
+            // 5. Interfaz y Navegación
+            toggleTheme() {
+                this.state.currentTheme = this.state.currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', this.state.currentTheme);
+                this.logTerm("INFO", `Tema UI cambiado a: ${this.state.currentTheme}`);
+                
+                // Actualizar colores de las grillas de gráficos si existen
+                if(this.state.isCalculated) this.renderCharts(); 
+            },
+            router(viewId) {
+                if (!this.state.isCalculated && viewId !== 'simulador') {
+                    alert("⚠️ Advertencia FinOps: Debe ejecutar el Motor de Tarificación primero para generar data.");
+                    return;
+                }
+                // Manejo de DOM para Vistas
+                document.querySelectorAll('.view-pane').forEach(el => el.classList.remove('active'));
+                document.getElementById(`view-${viewId}`).classList.add('active');
+                
+                // Manejo de Sidebar Menu
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                event.currentTarget.classList.add('active');
+
+                this.logTerm("INFO", `Navegación enrutada a módulo: /${viewId}`);
+
+                // Refrescar gráficos al cambiar de pestaña para evitar fallos de render en Canvas
+                if(this.state.isCalculated && (viewId === 'dashboard' || viewId === 'arquitectura')) {
+                    this.renderCharts();
+                }
+            },
+
+            // 6. Lógica de Negocio Crucial (Azure Tiers - Geometric Waste)
+            getAzureTier(reqGB) {
+                this.logTerm("INFO", `Calculando Azure Managed Disk Tier para ${reqGB}GB...`);
+                // Precios de discos Premium SSD LRS en Europa
+                if (reqGB <= 128) return { price: 19.71, allocated: 128 };
+                if (reqGB <= 256) return { price: 38.01, allocated: 256 };
+                if (reqGB <= 512) return { price: 73.22, allocated: 512 };
+                if (reqGB <= 1024) return { price: 135.05, allocated: 1024 };
+                if (reqGB <= 2048) return { price: 259.05, allocated: 2048 };
+                if (reqGB <= 4096) return { price: 495.57, allocated: 4096 };
+                return { price: 935.53, allocated: 8192 };
+            },
+
+            // 7. MOTOR PRINCIPAL FINOPS
+            executeSimulation() {
+                this.logTerm("CMD", "Iniciando Motor de Simulación FinOps...");
+                
+                // Captura de Inputs
+                const region = document.getElementById('in_region').value;
+                const discountMode = document.getElementById('in_discount').value;
+                const dias = parseFloat(document.getElementById('in_dias').value) || 90;
+                const dataOut = parseFloat(document.getElementById('in_dataout').value) || 1000;
+                const budget = parseFloat(document.getElementById('in_budget').value) || 150000;
+                
+                const vmpQty = parseFloat(document.getElementById('in_vmp_qty').value) || 0;
+                const vmpSt = parseFloat(document.getElementById('in_vmp_st').value) || 0;
+                const vmdbQty = parseFloat(document.getElementById('in_vmdb_qty').value) || 0;
+                const vmdbSt = parseFloat(document.getElementById('in_vmdb_st').value) || 0;
+
+                const hrs = dias * 24;
+                const mth = dias / 30.0;
+                
+                // Multiplicador de descuento por compromiso
+                let disc = 1.0;
+                if(discountMode === '1yr') { disc = 0.8; this.logTerm("WARN", "Aplicando descuento Reseved Instance 1YR (20%) a Compute."); }
+                if(discountMode === '3yr') { disc = 0.6; this.logTerm("WARN", "Aplicando descuento Reseved Instance 3YR (40%) a Compute."); }
+
+                // Matrices de Precios
+                const rates = this.pricingDB[region];
+
+                // CÁLCULO AWS
+                const awsComp = ((rates.aws.compApp * vmpQty) + (rates.aws.compDb * vmdbQty)) * hrs * disc;
+                const awsStore = ((vmpSt * vmpQty) + (vmdbSt * vmdbQty)) * rates.aws.store * mth;
+                const awsNet = Math.max(0, dataOut - 100) * rates.aws.net * mth;
+                const awsTot = awsComp + awsStore + awsNet;
+                this.logTerm("SUCCESS", `AWS Calculado. TCO: ${this.formatMoney(awsTot)}`);
+
+                // CÁLCULO AZURE
+                const azComp = ((rates.az.compApp * vmpQty) + (rates.az.compDb * vmdbQty)) * hrs * disc;
+                const azTierApp = this.getAzureTier(vmpSt);
+                const azTierDb = this.getAzureTier(vmdbSt);
+                const azStore = (azTierApp.price * vmpQty + azTierDb.price * vmdbQty) * mth;
+                const azNet = Math.max(0, dataOut - 100) * rates.az.net * mth;
+                const azTot = azComp + azStore + azNet;
+                this.logTerm("SUCCESS", `Azure Calculado. TCO: ${this.formatMoney(azTot)}`);
+
+                // CÁLCULO GCP
+                const gcpComp = ((rates.gcp.compApp * vmpQty) + (rates.gcp.compDb * vmdbQty)) * hrs * disc;
+                const gcpStore = ((vmpSt * vmpQty) + (vmdbSt * vmdbQty)) * rates.gcp.store * mth;
+                const gcpNet = dataOut * rates.gcp.net * mth;
+                const gcpTot = gcpComp + gcpStore + gcpNet;
+                this.logTerm("SUCCESS", `GCP Calculado. TCO: ${this.formatMoney(gcpTot)}`);
+
+                // Guardar Estado
+                this.state.results = {
+                    params: { dias, dataOut, budget, vmpQty, vmpSt, vmdbQty, vmdbSt, hrs },
+                    aws: { c: awsComp, s: awsStore, n: awsNet, t: awsTot },
+                    az:  { c: azComp, s: azStore, n: azNet, t: azTot, tierDBreq: vmdbSt, tierDBreal: azTierDb.allocated },
+                    gcp: { c: gcpComp, s: gcpStore, n: gcpNet, t: gcpTot }
+                };
+                
+                this.state.isCalculated = true;
+                
+                // Disparar actualizaciones de UI
+                this.updateUI();
+                
+                // Autonavegación elegante al Dashboard
+                document.querySelectorAll('.nav-item')[1].click();
+            },
+
+            // 8. Actualizador de DOM
+            updateUI() {
+                const res = this.state.results;
+                const minTCO = Math.min(res.aws.t, res.az.t, res.gcp.t);
+                
+                // Determinar Ganador
+                let winner = "";
+                let wColor = "";
+                if(minTCO === res.aws.t) { winner = "Amazon Web Services"; wColor = "var(--brand-aws)"; }
+                else if(minTCO === res.az.t) { winner = "Microsoft Azure"; wColor = "var(--brand-azure)"; }
+                else { winner = "Google Cloud"; wColor = "var(--brand-gcp)"; }
+
+                document.getElementById('out_winner_name').innerText = winner;
+                document.getElementById('out_winner_name').style.color = wColor;
+
+                // Actualizar KPIs de Proveedores
+                document.getElementById('out_tco_aws').innerText = this.formatMoney(res.aws.t);
+                document.getElementById('out_tco_az').innerText = this.formatMoney(res.az.t);
+                document.getElementById('out_tco_gcp').innerText = this.formatMoney(res.gcp.t);
+
+                // Lógica de Presupuesto (Burn Rate)
+                const burnPct = (minTCO / res.params.budget) * 100;
+                const brEl = document.getElementById('out_burnrate');
+                const btEl = document.getElementById('out_budget_txt');
+                const bcEl = document.getElementById('alert-budget-card');
+                
+                brEl.innerText = `${burnPct.toFixed(1)}% Consumido`;
+                
+                if(burnPct > 100) {
+                    brEl.style.color = "var(--semantic-danger)";
+                    btEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Déficit de ${this.formatMoney(minTCO - res.params.budget)}`;
+                    bcEl.style.borderColor = "var(--semantic-danger)";
+                    this.logTerm("ERR", `Presupuesto excedido. Burn rate: ${burnPct.toFixed(1)}%`);
+                } else {
+                    brEl.style.color = "var(--text-primary)";
+                    btEl.innerHTML = `<i class="fa-solid fa-check"></i> Superávit de ${this.formatMoney(res.params.budget - minTCO)}`;
+                    bcEl.style.borderColor = "var(--border-color)";
+                }
+
+                // Lógica de Arquitectura (Azure Waste)
+                const wasteGB = res.az.tierDBreal - res.az.tierDBreq;
+                const wastePct = (wasteGB / res.az.tierDBreal) * 100;
+                const txtWaste = document.getElementById('out_waste_txt');
+                if (wasteGB > 0) {
+                    txtWaste.innerHTML = `Azure provisiona el bloque de <strong>${res.az.tierDBreal} GB</strong>. Pierdes <strong>${wasteGB} GB</strong> (${wastePct.toFixed(1)}%) por instancia. Impacto a escala: <strong>${this.formatNum(wasteGB * res.params.vmdbQty)} GB desperdiciados en el clúster.</strong>`;
+                } else {
+                    txtWaste.innerHTML = `Tu almacenamiento de ${res.az.tierDBreq}GB encaja perfectamente en el Tier. 0% de desperdicio.`;
+                }
+
+                // Lógica Sostenibilidad
+                const totalNodes = res.params.vmpQty + res.params.vmdbQty;
+                const totalHours = totalNodes * res.params.hrs;
+                const co2Emission = totalHours * 0.0035; // Constante simulada kg/hr
+                
+                document.getElementById('eco_nodes').innerText = this.formatNum(totalNodes);
+                document.getElementById('eco_hours').innerText = this.formatNum(totalHours) + "h";
+                document.getElementById('eco_co2').innerText = this.formatNum(Math.round(co2Emission)) + " kg";
+                document.getElementById('eco_hardware').innerText = this.formatNum(totalNodes); // Nodos que no se compraron fisicamente
+
+                // Llenar Tabla Auditoría
+                document.getElementById('table-body').innerHTML = `
+                    <tr><td><span class="badge bg-aws">AWS</span></td><td>${this.formatMoney(res.aws.c)}</td><td>${this.formatMoney(res.aws.s)}</td><td style="font-weight:bold; color:var(--text-primary);">${this.formatMoney(res.aws.t)}</td></tr>
+                    <tr><td><span class="badge bg-azure">AZURE</span></td><td>${this.formatMoney(res.az.c)}</td><td>${this.formatMoney(res.az.s)}</td><td style="font-weight:bold; color:var(--text-primary);">${this.formatMoney(res.az.t)}</td></tr>
+                    <tr><td><span class="badge bg-gcp">GCP</span></td><td>${this.formatMoney(res.gcp.c)}</td><td>${this.formatMoney(res.gcp.s)}</td><td style="font-weight:bold; color:var(--text-primary);">${this.formatMoney(res.gcp.t)}</td></tr>
+                `;
+            },
+
+            // 9. Gestor de Gráficos (Chart.js Avanzado)
+            renderCharts() {
+                const res = this.state.results;
+                if(!res) return;
+
+                const gridColor = this.state.currentTheme === 'dark' ? '#1E293B' : '#F1F5F9';
+                const textColor = this.state.currentTheme === 'dark' ? '#94A3B8' : '#64748B';
+
+                // Helper para destruir graficos viejos
+                const resetChart = (id) => { if(this.state.charts[id]) this.state.charts[id].destroy(); }
+
+                // CHART 1: Bar TCO Breakdown
+                resetChart('tcoBar');
+                const ctxBar = document.getElementById('chartTCOBar').getContext('2d');
+                this.state.charts['tcoBar'] = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: ['AWS', 'Azure', 'GCP'],
+                        datasets: [
+                            { label: 'Compute OpEx', data: [res.aws.c, res.az.c, res.gcp.c], backgroundColor: '#3B82F6', borderRadius: 4 },
+                            { label: 'Storage OpEx', data: [res.aws.s, res.az.s, res.gcp.s], backgroundColor: '#10B981', borderRadius: 4 },
+                            { label: 'Network Data Out', data: [res.aws.n, res.az.n, res.gcp.n], backgroundColor: '#64748B', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: {
+                            x: { stacked: true, grid: { display: false }, ticks: { color: textColor } },
+                            y: { stacked: true, grid: { color: gridColor }, ticks: { color: textColor, callback: (v) => '$'+(v/1000)+'k' } }
+                        },
+                        plugins: { legend: { labels: { color: textColor } } }
+                    }
+                });
+
+                // CHART 2: Trend Line (Proyección a 3 años, multiplicador simple)
+                resetChart('trendLine');
+                const ctxLine = document.getElementById('chartTrendLine').getContext('2d');
+                this.state.charts['trendLine'] = new Chart(ctxLine, {
+                    type: 'line',
+                    data: {
+                        labels: ['Año 1', 'Año 2', 'Año 3'],
+                        datasets: [
+                            { label: 'AWS', data: [res.aws.t, res.aws.t*2, res.aws.t*3], borderColor: '#F59E0B', tension: 0.4 },
+                            { label: 'Azure', data: [res.az.t, res.az.t*2, res.az.t*3], borderColor: '#0EA5E9', tension: 0.4 },
+                            { label: 'GCP', data: [res.gcp.t, res.gcp.t*2, res.gcp.t*3], borderColor: '#EF4444', tension: 0.4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { x: { grid: { color: gridColor }, ticks:{color:textColor} }, y: { grid: { color: gridColor }, ticks:{color:textColor} } },
+                        plugins: { legend: { labels: { color: textColor } } }
+                    }
+                });
+
+                // CHART 3: Donut Azure Waste
+                resetChart('donutWaste');
+                const ctxDonut = document.getElementById('chartWasteDonut').getContext('2d');
+                const waste = res.az.tierDBreal - res.az.tierDBreq;
+                this.state.charts['donutWaste'] = new Chart(ctxDonut, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['GB Útiles (Utilizados)', 'GB Ociosos (Desperdicio)'],
+                        datasets: [{ data: [res.az.tierDBreq, waste], backgroundColor: ['#3B82F6', '#EF4444'], borderWidth: 0, hoverOffset: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'right', labels: {color: textColor} } } }
+                });
+
+                // CHART 4: Radar Qualitativo
+                resetChart('radarQual');
+                const ctxRadar = document.getElementById('chartRadar').getContext('2d');
+                this.state.charts['radarQual'] = new Chart(ctxRadar, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Madurez IaaS', 'Costo Compute', 'Flexibilidad Storage', 'Seguridad Red', 'Open-Source Fit'],
+                        datasets: [
+                            { label: 'AWS', data: [10, 8, 10, 9, 9], borderColor: '#F59E0B', backgroundColor: 'rgba(245, 158, 11, 0.1)' },
+                            { label: 'Azure', data: [9, 7, 5, 8, 7], borderColor: '#0EA5E9', backgroundColor: 'rgba(14, 165, 233, 0.1)' },
+                            { label: 'GCP', data: [8, 10, 8, 9, 10], borderColor: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { r: { angleLines: { color: gridColor }, grid: { color: gridColor }, pointLabels: { color: textColor }, ticks: { display: false, max: 10, min: 0 } } },
+                        plugins: { legend: { labels: { color: textColor } } }
+                    }
+                });
+            },
+
+            // 10. Exportación de Datos (Generación de Archivo en Memoria)
+            exportCSV() {
+                if(!this.state.isCalculated) return alert("Ejecuta la simulación primero.");
+                this.logTerm("CMD", "Generando archivo CSV estructurado para auditoría contable...");
+                
+                const res = this.state.results;
+                const header = "Provider,Compute_OpEx,Storage_OpEx,Network_OpEx,Total_TCO_USD\n";
+                const rowAws = `AWS,${res.aws.c},${res.aws.s},${res.aws.n},${res.aws.t}\n`;
+                const rowAz  = `Azure,${res.az.c},${res.az.s},${res.az.n},${res.az.t}\n`;
+                const rowGcp = `GCP,${res.gcp.c},${res.gcp.s},${res.gcp.n},${res.gcp.t}\n`;
+                
+                const csvContent = header + rowAws + rowAz + rowGcp;
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "onu_finops_audit_2026.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                this.logTerm("SUCCESS", "Descarga de archivo CSV completada.");
+            }
+        };
+
+        // Inicializar Aplicación al cargar el DOM
+        document.addEventListener("DOMContentLoaded", () => { app.init(); });
+    </script>
+</body>
+</html>
